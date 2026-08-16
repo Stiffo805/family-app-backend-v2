@@ -1,0 +1,14 @@
+services:
+  - type: web
+    plan: free
+    name: family_app_backend_v2
+    region: frankfurt
+    runtime: python
+    buildCommand: 'bash ./scripts/build.sh' 
+    startCommand: 'fastapi run main.py'
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.13 
+      
+      - key: DATABASE_URL
+        sync: false
