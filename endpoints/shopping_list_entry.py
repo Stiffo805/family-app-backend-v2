@@ -108,7 +108,7 @@ def delete_entry(entry_id: str, username: str):
 
         changelog_entry = ChangelogModel(
             author=username,
-            change_title='Usunięto produkt',
+            change_title='Usunięto produkt z listy',
             product_id=entry.product_id,
             shopping_list_id=entry.shopping_list_id,
             created_at=datetime.now()
