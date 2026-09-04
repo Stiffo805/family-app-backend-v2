@@ -24,7 +24,7 @@ class ChangelogModel(Base):
     change_title: Mapped[str] = mapped_column(
         String(120)
     )
-    created_at: Mapped[datetime] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     author: Mapped[Optional[str]] = mapped_column(
         String(120)
     )

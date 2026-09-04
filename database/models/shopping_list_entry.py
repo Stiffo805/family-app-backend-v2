@@ -32,7 +32,7 @@ class ShoppingListEntryModel(Base):
     extra_notes: Mapped[Optional[str]] = mapped_column(
         String(120)
     )
-    last_updated_at: Mapped[datetime] = mapped_column(DateTime)
+    last_updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
     # Fields with default values
     id: Mapped[str] = mapped_column(
