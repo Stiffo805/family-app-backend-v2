@@ -1,8 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, status
 
 from dao.changelog_dao import ChangelogDao
+from dao.shopping_list_dao import ShoppingListDao
 from dao.shopping_list_entry_dao import ShoppingListEntryDao
 from database.db import get_db
 from database.models.changelog import ChangelogModel
@@ -14,6 +15,7 @@ router = APIRouter(tags=["Shopping lists entries"])
 @router.post("/")
 def create_new_shopping_list_entry(request: CreateShoppingListEntryRequest):
     with get_db() as db_session:
+        shopping_list_dao = ShoppingListDao(db_session)
         shopping_list_entry_dao = ShoppingListEntryDao(db_session)
         changelog_dao = ChangelogDao(db_session)
 
@@ -23,18 +25,24 @@ def create_new_shopping_list_entry(request: CreateShoppingListEntryRequest):
             quantity=request.quantity,
             unit=request.unit,
             extra_notes=request.extra_notes,
-            last_updated_at=datetime.now(),
+            last_updated_at=datetime.now(timezone.utc),
             is_checked=False
         )
 
         shopping_list_entry_dao.save(new_shopping_list_entry)
+
+        shopping_list = shopping_list_dao.get_by_id(request.shopping_list_id)
+
+        shopping_list.last_updated_at = datetime.now(timezone.utc)
+
+        shopping_list_dao.save(shopping_list)
 
         changelog_entry = ChangelogModel(
             author=request.username,
             change_title='Dodano produkt do listy',
             product_id=request.product_id,
             shopping_list_id=request.shopping_list_id,
-            created_at=datetime.now()
+            created_at=datetime.now(timezone.utc)
         )
 
         changelog_dao.save(changelog_entry)
@@ -42,6 +50,7 @@ def create_new_shopping_list_entry(request: CreateShoppingListEntryRequest):
 @router.put("/")
 def edit_shopping_list_entry(request: EditShoppingListEntryRequest):
     with get_db() as db_session:
+        shopping_list_dao = ShoppingListDao(db_session)
         shopping_list_entry_dao = ShoppingListEntryDao(db_session)
         changelog_dao = ChangelogDao(db_session)
 
@@ -56,15 +65,22 @@ def edit_shopping_list_entry(request: EditShoppingListEntryRequest):
         entry.quantity = request.quantity
         entry.unit = request.unit
         entry.extra_notes = request.extra_notes
+        entry.last_updated_at = datetime.now(timezone.utc)
 
         shopping_list_entry_dao.save(entry)
+
+        shopping_list = shopping_list_dao.get_by_id(entry.shopping_list.id)
+        
+        shopping_list.last_updated_at = datetime.now(timezone.utc)
+
+        shopping_list_dao.save(shopping_list)
 
         changelog_entry = ChangelogModel(
             author=request.username,
             change_title='Edytowano produkt na liście',
             product_id=request.product_id,
             shopping_list_id=entry.shopping_list_id,
-            created_at=datetime.now()
+            created_at=datetime.now(timezone.utc)
         )
 
         changelog_dao.save(changelog_entry)
@@ -72,6 +88,7 @@ def edit_shopping_list_entry(request: EditShoppingListEntryRequest):
 @router.patch("/check")
 def check_shopping_list_entry(request: CheckShoppingListEntryRequest):
     with get_db() as db_session:
+        shopping_list_dao = ShoppingListDao(db_session)
         shopping_list_entry_dao = ShoppingListEntryDao(db_session)
         changelog_dao = ChangelogDao(db_session)
 
@@ -86,12 +103,18 @@ def check_shopping_list_entry(request: CheckShoppingListEntryRequest):
 
         shopping_list_entry_dao.save(entry)
 
+        shopping_list = shopping_list_dao.get_by_id(entry.shopping_list.id)
+                
+        shopping_list.last_updated_at = datetime.now(timezone.utc)
+
+        shopping_list_dao.save(shopping_list)
+
         changelog_entry = ChangelogModel(
             author=request.username,
             change_title='Kupiono' if request.checked else 'Do kupienia',
             product_id=entry.product_id,
             shopping_list_id=entry.shopping_list_id,
-            created_at=datetime.now()
+            created_at=datetime.now(timezone.utc)
         )
 
         changelog_dao.save(changelog_entry)
@@ -99,10 +122,17 @@ def check_shopping_list_entry(request: CheckShoppingListEntryRequest):
 @router.delete("/{entry_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_entry(entry_id: str, username: str):
     with get_db() as db_session:
+        shopping_list_dao = ShoppingListDao(db_session)
         shopping_list_entry_dao = ShoppingListEntryDao(db_session)
         changelog_dao = ChangelogDao(db_session)
 
         entry = shopping_list_entry_dao.find_by_id(entry_id)
+
+        shopping_list = shopping_list_dao.get_by_id(entry.shopping_list.id)
+                        
+        shopping_list.last_updated_at = datetime.now(timezone.utc)
+
+        shopping_list_dao.save(shopping_list)
 
         shopping_list_entry_dao.delete_by_id(entry_id)
 
@@ -111,7 +141,7 @@ def delete_entry(entry_id: str, username: str):
             change_title='Usunięto produkt z listy',
             product_id=entry.product_id,
             shopping_list_id=entry.shopping_list_id,
-            created_at=datetime.now()
+            created_at=datetime.now(timezone.utc)
         )
 
         changelog_dao.save(changelog_entry)
