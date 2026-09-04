@@ -11,7 +11,7 @@ from database.models.changelog import ChangelogModel
 from database.models.shopping_list import ShoppingListModel
 from util.types import CreateShoppingListRequest, EditShoppingListRequest, ShoppingListResponse
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 router = APIRouter(tags=["Shopping lists"])
 
@@ -32,7 +32,7 @@ def create_new_shopping_list(request: CreateShoppingListRequest):
 
         new_shopping_list = ShoppingListModel(
             title=request.title,
-            last_updated_at=datetime.now()
+            last_updated_at=datetime.now(timezone.utc)
         )
 
         shopping_list_dao.save(new_shopping_list)
@@ -41,7 +41,7 @@ def create_new_shopping_list(request: CreateShoppingListRequest):
             author=request.username,
             change_title='Utworzono listę zakupów',
             shopping_list_id=new_shopping_list.id,
-            created_at=datetime.now(),
+            created_at=datetime.now(timezone.utc),
             product_id=None
         )
 
@@ -68,7 +68,7 @@ def edit_shopping_list(shopping_list_id: str, request: EditShoppingListRequest):
             author=request.username,
             change_title='Zmieniono nazwę listy zakupów',
             shopping_list_id=shopping_list.id,
-            created_at=datetime.now(),
+            created_at=datetime.now(timezone.utc),
             product_id=None
         )
 
