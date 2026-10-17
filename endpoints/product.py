@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from dao.product_dao import ProductDao
 from database.db import get_db
 from database.models.product import ProductModel
-from util.types import CreateProductRequest, ProductResponse
+from util.types import CreateProductRequest, EditProductRequest, ProductResponse
 
 router = APIRouter(tags=["Products"])
 
@@ -35,6 +35,21 @@ def get_product_by_id(product_id: str):
         product_dao = ProductDao(db_session)
 
         product = product_dao.get_by_id(product_id)
+
+        item = ProductResponse.model_validate(product)
+
+        return JSONResponse(content=jsonable_encoder({"item": item})) 
+
+@router.put("/{product_id}")
+def edit_product(product_id: str, request: EditProductRequest):
+    with get_db() as db_session:
+        product_dao = ProductDao(db_session)
+        
+        product = product_dao.get_by_id(product_id)
+
+        product.name = request.name
+
+        product_dao.save(product)
 
         item = ProductResponse.model_validate(product)
 
