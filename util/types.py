@@ -24,6 +24,9 @@ class EditShoppingListRequest(UsernameRequest):
 class CreateProductRequest(CamelCaseSchema):
     name: str
 
+class EditProductRequest(CamelCaseSchema):
+    name: str
+
 class CreateShoppingListEntryRequest(UsernameRequest):
     shopping_list_id: str
     product_id: str
